@@ -5,7 +5,7 @@ https://prometheus.io/docs/prometheus/latest/getting_started/
 
 # Installation
 
-We will use run Prometheus on Docker. You could check the following link to learn more about it.
+We will run Prometheus on Docker. You could check the following link to learn more about it.
 https://hub.docker.com/r/prom/prometheus
 
 You could use the following command to pull and run the latest Prometheus image. This image will use the `prometheus.yml`
