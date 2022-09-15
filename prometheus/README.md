@@ -66,7 +66,7 @@ docker run --net host\
 
 - Check the metrics on the Prometheus status page.
 
-    Open the Prometheus status page at http://localhost:9090. You could execute the following query to the average (dummy)
+    Open the Prometheus status page at http://localhost:9090. You could execute the following query to get the average (dummy)
     request duration per second.
 
 ```bash
