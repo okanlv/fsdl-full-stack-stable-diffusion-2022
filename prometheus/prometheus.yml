@@ -22,3 +22,8 @@ scrape_configs:
 
     static_configs:
       - targets: ['localhost:8000']
+
+  - job_name: 'triton'
+
+    static_configs:
+      - targets: ['localhost:8002']
