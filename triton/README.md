@@ -7,7 +7,7 @@
 git clone git@github.com:okanlv/fsdl-full-stack-stable-diffusion-2022.git
 # download models
 cd fsdl-full-stack-stable-diffusion-2022
-wget triton/download_models.sh
+sh triton/download_models.sh
 ```
 
 <div align="center"><h2>Build Triton Inference Server</h2></div>
