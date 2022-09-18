@@ -1,0 +1,4 @@
+streamlit
+tritonclient[http]
+numpy
+pillow
