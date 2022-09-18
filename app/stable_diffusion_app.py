@@ -155,15 +155,16 @@ if __name__ == "__main__":
             key="prompt",
             placeholder="The quick brown fox on mars",
         )
-
+        # TODO: Investigate tritonserver timeout error when using larger step size > 50
         steps = st.slider(
             label="Number of Steps: ", min_value=1, max_value=500, value=1, key="steps"
         )
         guidance_scale = st.slider(
             label="Guidance Scale: ",
-            min_value=1,
-            max_value=20,
-            value=1,
+            min_value=1.0,
+            max_value=20.0,
+            step=0.5,
+            value=7.5,
             key="guidance_scale",
         )
 
@@ -181,7 +182,8 @@ if __name__ == "__main__":
             image_placeholder.empty()
 
         st.text(body="Generated Image")
-        generated_image = st.image(
+        generated_image = st.empty()
+        generated_image.image(
             f"{path}/assets/the_quick_brown_fox_on_mars.png", caption="Generated Image"
         )
 
@@ -201,6 +203,6 @@ if __name__ == "__main__":
             guidance_scale=guidance_scale,
             seed=seed,
         )
-
-        grid_images = image_grid(pil_images, rows=1, cols=1)
-        st.image(grid_images, caption="Generated Image")
+        with col2:
+            grid_images = image_grid(pil_images, rows=1, cols=1)
+            generated_image.image(grid_images, caption="Generated Image")
