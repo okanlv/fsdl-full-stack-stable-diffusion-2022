@@ -89,5 +89,3 @@ docker run -d --net host\
 
 You could check the Grafana page at http://localhost:3000. Enter `admin` for the username and password. Then, 
 go to http://localhost:3000/d/S-BvSNn4k/triton-inference-server-dashboard page to see the Triton Inference Server Dashboard.
-
-
