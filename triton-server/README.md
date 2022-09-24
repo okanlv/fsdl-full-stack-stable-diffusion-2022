@@ -26,6 +26,18 @@ wget -O model_repository/densenet_onnx/1/model.onnx \
 docker run --gpus=1 --rm --net=host -v $(pwd)/model_repository:/models nvcr.io/nvidia/tritonserver:22.02-py3 tritonserver --model-repository=/models
 ```
 
+Note that if have followed the steps under 'localstack/README.md', you should have a running localstack image with model files inside a bucket. Instead of attaching a local
+folder and use it to run the Triton Inference Server, as we have done above, you could directly download the files from AWS S3 localstack using the following command. You
+could check out [here](https://github.com/triton-inference-server/server/blob/main/docs/user_guide/model_repository.md#model-repository-locations
+) if you want to learn more about this.
+
+```bash
+docker run --gpus=1 --rm --net=host  \
+      -e AWS_ACCESS_KEY_ID='dummy_id' -e AWS_SECRET_ACCESS_KEY='dummy_key'  \
+      nvcr.io/nvidia/tritonserver:22.02-py3 tritonserver \
+      --model-repository=s3://localhost:4566/fssd-models/model_repository
+```
+
 Now, let's send a few request.
 ```bash
 # In a separate console, launch the image_client example from the NGC Triton SDK container
