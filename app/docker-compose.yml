@@ -11,7 +11,7 @@ services:
               count: 1
               capabilities: [gpu]
     volumes:
-      - $PWD/sd-v1-4-onnx/models:/models
+      - $PWD/../triton/sd-v1-4-onnx/models:/models
     ports:
       - 8000:8000
       - 8001:8001
