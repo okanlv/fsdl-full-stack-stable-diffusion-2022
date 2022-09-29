@@ -109,6 +109,9 @@ if __name__ == "__main__":
     samples = 1
     seed = 1024
 
+    if "grid_images" not in st.session_state:
+        st.session_state.grid_images = None
+
     path = os.path.dirname(__file__)
     st.markdown(hide_st_style, unsafe_allow_html=True)
 
@@ -183,11 +186,16 @@ if __name__ == "__main__":
 
         st.text(body="Generated Image")
         generated_image = st.empty()
-        generated_image.image(
-            f"{path}/assets/the_quick_brown_fox_on_mars.png", caption="Generated Image"
-        )
+        if st.session_state.grid_images is None:
+            generated_image.image(
+                f"{path}/assets/the_quick_brown_fox_on_mars.png",
+                caption="Generated Image",
+            )
+        else:
+            generated_image.image(
+                st.session_state.grid_images, caption="Generated Image"
+            )
 
-    result = ""
     if st.button("Generate Image"):
         st.success(f"Generating image/images for prompt: {prompt}!")
         sd_triton_server = SDTritonServer(
@@ -204,5 +212,7 @@ if __name__ == "__main__":
             seed=seed,
         )
         with col2:
-            grid_images = image_grid(pil_images, rows=1, cols=1)
-            generated_image.image(grid_images, caption="Generated Image")
+            st.session_state.grid_images = image_grid(pil_images, rows=1, cols=1)
+            generated_image.image(
+                st.session_state.grid_images, caption="Generated Image"
+            )
