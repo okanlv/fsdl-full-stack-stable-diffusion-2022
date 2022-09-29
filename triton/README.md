@@ -23,6 +23,5 @@ docker build -t tritonserver .
 
 ```bash
 # inside triton subdirectory run
-docker run -it --rm --gpus all -p8000:8000 -p8001:8001 -p8002:8002 --shm-size 16384m \
--v $PWD/sd-v1-4-onnx/models:/models tritonserver tritonserver --model-repository /models/
+docker compose up
 ```

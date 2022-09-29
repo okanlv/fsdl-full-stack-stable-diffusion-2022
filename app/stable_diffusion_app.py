@@ -101,7 +101,7 @@ if __name__ == "__main__":
     """
     # model args
     model_name = "stable_diffusion"
-    url = "0.0.0.0:8000"
+    url = "inference_server:8000"
     model_version = "1"
     batch_size = 1
 

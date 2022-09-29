@@ -1,0 +1,24 @@
+version: '2.3'
+
+services:
+  inference_server:
+    image: tritonserver
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    volumes:
+      - $PWD/sd-v1-4-onnx/models:/models
+    ports:
+      - 8000:8000
+      - 8001:8001
+      - 8002:8002
+    command: ["tritonserver", "--model-repository=/models/"]
+    shm_size: 16384m
+  streamlit:
+    image: streamlit
+    ports:
+      - 8501:8501
