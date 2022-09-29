@@ -23,7 +23,7 @@ docker build -t tritonserver .
 
 ```bash
 # inside app subdirectory run
-docker build -t streamlit
+docker build -t streamlit .
 ```
 
 <div align="center"><h2>Run Docker Compose</h2></div>
