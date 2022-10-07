@@ -32,9 +32,36 @@ This command will run triton inference server and streamlit docker containers.
 ```bash
 docker compose up
 ```
+Now you can access Styreamlit app on your local machine on [http://localhost:8501](http://localhost:8501). In order to make it available via internet we use ngrok.
 
-<div align="center"><h2>Open Streamlit app</h2></div>
+<div align="center"><h2>Share local Streamlit app with ngrok</h2></div>
 
-Streamlit web app URL:
+1. Create a ngrok acount [here](https://dashboard.ngrok.com/signup) and log in.
+2. Install ngrok
+   ```bash
+   curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null && \
+   echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list && \
+   sudo apt update && sudo apt install ngrok
+   ```
+3. Authenticate your ngrok agent.
+   ```bash
+   ngrok authtoken <relace-with-your-Authtoken>
+   ```
+   you can get your token by visiting [here](https://dashboard.ngrok.com/get-started/your-authtoken).
+4. Forward your local Streamlit app to ngrok
+   ```bash
+   ngrok http 8501
+   ```
+   Now you will see a link to your streamlit app via ngrok similar to the following which forward localhost:8501 to an ngrok url.
+   
+   ```bash
+    ngrok by @inconshreveable                                                                                                    
 
-[http://localhost:8501](http://localhost:8501)
+    Session Status                online                                                                                                                                                                                                                                                         
+    Account                       Omid (Plan: Free)                                                                                                                                                                                                                                              
+    Version                       2.3.40                                                                                                                                                                                                                                                         
+    Region                        United States (us)                                                                                                                                                                                                                                             
+    Web Interface                 http://127.0.0.1:4040 
+    Forwarding                    http://aeda-188-119-39-165.ngrok.io -> http://localhost:8501                                                                                                                                                                                                   
+    Forwarding                    https://aeda-188-119-39-165.ngrok.io -> http://localhost:8501  
+   ```
