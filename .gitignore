@@ -134,5 +134,6 @@ dmypy.json
 # repo
 *.onnx
 *.pbtxt
-triton/sd-v1-4-onnx/models/stable_diffusion/1/*
-!triton/sd-v1-4-onnx/models/stable_diffusion/1/*.py
+*tar.gz
+triton/sd-v1-4-onnx/models/*
+

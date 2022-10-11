@@ -58,14 +58,17 @@ class SDTritonServer:
         )
 
     def infer(
-        self, prompt, init_image, samples, steps, guidance_scale, seed
+        self,
+        prompt,
+        samples,
+        steps,
+        guidance_scale,
+        seed,
+        init_image=None,
     ):
         # Setting inputs
         self.prompt_in.set_data_from_numpy(
             np.asarray([prompt] * batch_size, dtype=object)
-        )
-        self.init_image_in.set_data_from_numpy(
-            np.asarray([init_image] * batch_size, dtype=object)
         )
         self.samples_in.set_data_from_numpy(np.asarray([samples], dtype=np.int32))
         self.steps_in.set_data_from_numpy(np.asarray([steps], dtype=np.int32))
@@ -74,29 +77,47 @@ class SDTritonServer:
         )
         self.seed_in.set_data_from_numpy(np.asarray([seed], dtype=np.int64))
 
-        # do inference
-        response = self.triton_client.infer(
-            model_name=model_name,
-            model_version=model_version,
-            inputs=[
-                self.prompt_in,
-                self.init_image_in,
-                self.samples_in,
-                self.steps_in,
-                self.guidance_scale_in,
-                self.seed_in,
-            ],
-            outputs=[self.images],
-            timeout=1200000,
-        )
+        if init_image is not None:
+            self.init_image_in.set_data_from_numpy(
+                np.asarray([init_image] * batch_size, dtype=object)
+            )
 
+            # do inference
+            response = self.triton_client.infer(
+                model_name=model_name,
+                model_version=model_version,
+                inputs=[
+                    self.prompt_in,
+                    self.init_image_in,
+                    self.samples_in,
+                    self.steps_in,
+                    self.guidance_scale_in,
+                    self.seed_in,
+                ],
+                outputs=[self.images],
+                timeout=1200000,
+            )
+        else:
+            # do inference
+            response = self.triton_client.infer(
+                model_name=model_name,
+                model_version=model_version,
+                inputs=[
+                    self.prompt_in,
+                    self.samples_in,
+                    self.steps_in,
+                    self.guidance_scale_in,
+                    self.seed_in,
+                ],
+                outputs=[self.images],
+                timeout=1200000,
+            )
         # get generated images
         images = response.as_numpy("IMAGES")
         if images.ndim == 3:
             images = images[None, ...]
         images = (images * 255).round().astype("uint8")
         pil_images = [Image.fromarray(image) for image in images]
-
         return pil_images
 
 
@@ -108,7 +129,7 @@ if __name__ == "__main__":
         </style>
     """
     # model args
-    model_name = "stable_diffusion"
+    model_name = "stable_diffusion_txt2img"
     url = "inference_server:8000"
     model_version = "1"
     batch_size = 1
@@ -126,7 +147,10 @@ if __name__ == "__main__":
     st.sidebar.title("About")
     st.sidebar.info(
         "**Stable Diffusion App** can Generate photo-realistic images based on your input prompt\n\n"
+        "**Text to Image**:\n\n"
         "You should enter a prompt, choose number of steps and guidance scale and click generate.\n\n"
+        "**Image to Image**:\n\n"
+        "You should enter a prompt, upload an initial image and choose number of steps and guidance scale and click generate.\n\n"
     )
     Title_html = """
     <style>
@@ -149,10 +173,6 @@ if __name__ == "__main__":
           }
         }
     </style> 
-    
-    <div class="title">
-        <h1>Stable Diffusion App</h1>
-    </div>
     """
     st.markdown(Title_html, unsafe_allow_html=True)  # Title rendering
     st.header("Stable Diffusion App")
@@ -183,18 +203,18 @@ if __name__ == "__main__":
 
     with col2:
         uploaded_image = st.file_uploader(
-            "Upload an Image", type=["jpg", "jpeg", "png"]
+            "Upload an Image (Optional)", type=["jpg", "jpeg", "png"]
         )
         if uploaded_image is not None:
             init_image = Image.open(uploaded_image)
             st.image(init_image, caption="Uploaded Image.", use_column_width=True)
             is_init_image = True
+            model_name = "stable_diffusion"
         else:
             image_placeholder = st.image(f"{path}/assets/placeholder.png")
             image_placeholder.empty()
             is_init_image = False
-
-        st.text(body="Generated Image")
+        st.text(body="Sample Generated Image")
         generated_image = st.empty()
         if st.session_state.grid_images is None:
             generated_image.image(
@@ -205,31 +225,36 @@ if __name__ == "__main__":
             generated_image.image(
                 st.session_state.grid_images, caption="Generated Image"
             )
-
     if st.button("Generate Image"):
+        st.success(f"Generating image/images for prompt: {prompt}!")
+        sd_triton_server = SDTritonServer(
+            model_name=model_name,
+            url=url,
+            model_version=model_version,
+            batch_size=batch_size,
+        )
         if is_init_image is True:
-            st.success(f"Generating image/images for prompt: {prompt}!")
-            sd_triton_server = SDTritonServer(
-                model_name=model_name,
-                url=url,
-                model_version=model_version,
-                batch_size=batch_size,
-            )
             buf = io.BytesIO()
             init_image.save(buf, format="png")
             init_image = buf.getvalue()
             pil_images = sd_triton_server.infer(
                 prompt=prompt,
+                samples=samples,
+                steps=steps,
+                guidance_scale=guidance_scale,
+                seed=seed,
                 init_image=init_image,
+            )
+        else:
+            pil_images = sd_triton_server.infer(
+                prompt=prompt,
                 samples=samples,
                 steps=steps,
                 guidance_scale=guidance_scale,
                 seed=seed,
             )
-            with col2:
-                st.session_state.grid_images = image_grid(pil_images, rows=1, cols=1)
-                generated_image.image(
-                    st.session_state.grid_images, caption="Generated Image"
-                )
-        else:
-            st.error('You should upload an image', icon="🚨")
+        with col2:
+            st.session_state.grid_images = image_grid(pil_images, rows=1, cols=1)
+            generated_image.image(
+                st.session_state.grid_images, caption="Generated Image"
+            )
