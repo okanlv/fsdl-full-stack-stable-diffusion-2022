@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 import os
-from ctypes import c_void_p
-from email.policy import default
+import io
 
 import numpy as np
-import cv2
 import PIL
 import streamlit as st
 import tritonclient.http
@@ -30,7 +28,7 @@ class SDTritonServer:
             name="PROMPT", shape=(batch_size,), datatype="BYTES"
         )
         self.init_image_in = tritonclient.http.InferInput(
-            name="INIT_IMAGE", shape=(batch_size,), datatype="FP32"
+            name="INIT_IMAGE", shape=(batch_size,), datatype="BYTES"
         )
         self.samples_in = tritonclient.http.InferInput(
             "SAMPLES", (batch_size,), "INT32"
@@ -59,13 +57,15 @@ class SDTritonServer:
             model_name=model_name, model_version=model_version
         )
 
-    def infer(self, prompt, init_image, samples, steps, guidance_scale, seed):
+    def infer(
+        self, prompt, init_image, samples, steps, guidance_scale, seed
+    ):
         # Setting inputs
         self.prompt_in.set_data_from_numpy(
             np.asarray([prompt] * batch_size, dtype=object)
         )
         self.init_image_in.set_data_from_numpy(
-            np.asarray([init_image] * batch_size, dtype=np.float32)
+            np.asarray([init_image] * batch_size, dtype=object)
         )
         self.samples_in.set_data_from_numpy(np.asarray([samples], dtype=np.int32))
         self.steps_in.set_data_from_numpy(np.asarray([steps], dtype=np.int32))
@@ -183,14 +183,16 @@ if __name__ == "__main__":
 
     with col2:
         uploaded_image = st.file_uploader(
-            "Upload an Image (Optional)", type=["jpg", "jpeg", "png"]
+            "Upload an Image", type=["jpg", "jpeg", "png"]
         )
         if uploaded_image is not None:
             init_image = Image.open(uploaded_image)
             st.image(init_image, caption="Uploaded Image.", use_column_width=True)
+            is_init_image = True
         else:
             image_placeholder = st.image(f"{path}/assets/placeholder.png")
             image_placeholder.empty()
+            is_init_image = False
 
         st.text(body="Generated Image")
         generated_image = st.empty()
@@ -205,24 +207,29 @@ if __name__ == "__main__":
             )
 
     if st.button("Generate Image"):
-        st.success(f"Generating image/images for prompt: {prompt}!")
-        sd_triton_server = SDTritonServer(
-            model_name=model_name,
-            url=url,
-            model_version=model_version,
-            batch_size=batch_size,
-        )
-        init_image = cv2.cvtColor(np.array(init_image), cv2.COLOR_RGB2BGR)
-        pil_images = sd_triton_server.infer(
-            prompt=prompt,
-            init_image=init_image,
-            samples=samples,
-            steps=steps,
-            guidance_scale=guidance_scale,
-            seed=seed,
-        )
-        with col2:
-            st.session_state.grid_images = image_grid(pil_images, rows=1, cols=1)
-            generated_image.image(
-                st.session_state.grid_images, caption="Generated Image"
+        if is_init_image is True:
+            st.success(f"Generating image/images for prompt: {prompt}!")
+            sd_triton_server = SDTritonServer(
+                model_name=model_name,
+                url=url,
+                model_version=model_version,
+                batch_size=batch_size,
             )
+            buf = io.BytesIO()
+            init_image.save(buf, format="png")
+            init_image = buf.getvalue()
+            pil_images = sd_triton_server.infer(
+                prompt=prompt,
+                init_image=init_image,
+                samples=samples,
+                steps=steps,
+                guidance_scale=guidance_scale,
+                seed=seed,
+            )
+            with col2:
+                st.session_state.grid_images = image_grid(pil_images, rows=1, cols=1)
+                generated_image.image(
+                    st.session_state.grid_images, caption="Generated Image"
+                )
+        else:
+            st.error('You should upload an image', icon="🚨")
