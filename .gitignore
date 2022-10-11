@@ -132,4 +132,8 @@ dmypy.json
 .vscode/
 
 # repo
+*.onnx
+*.pbtxt
+*tar.gz
 triton/sd-v1-4-onnx/models/*
+
