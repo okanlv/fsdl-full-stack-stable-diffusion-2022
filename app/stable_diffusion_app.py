@@ -4,6 +4,7 @@ from ctypes import c_void_p
 from email.policy import default
 
 import numpy as np
+import cv2
 import PIL
 import streamlit as st
 import tritonclient.http
@@ -27,6 +28,9 @@ class SDTritonServer:
         # Input placeholder
         self.prompt_in = tritonclient.http.InferInput(
             name="PROMPT", shape=(batch_size,), datatype="BYTES"
+        )
+        self.init_image_in = tritonclient.http.InferInput(
+            name="INIT_IMAGE", shape=(batch_size,), datatype="FP32"
         )
         self.samples_in = tritonclient.http.InferInput(
             "SAMPLES", (batch_size,), "INT32"
@@ -55,10 +59,13 @@ class SDTritonServer:
             model_name=model_name, model_version=model_version
         )
 
-    def infer(self, prompt, samples, steps, guidance_scale, seed):
+    def infer(self, prompt, init_image, samples, steps, guidance_scale, seed):
         # Setting inputs
         self.prompt_in.set_data_from_numpy(
             np.asarray([prompt] * batch_size, dtype=object)
+        )
+        self.init_image_in.set_data_from_numpy(
+            np.asarray([init_image] * batch_size, dtype=np.float32)
         )
         self.samples_in.set_data_from_numpy(np.asarray([samples], dtype=np.int32))
         self.steps_in.set_data_from_numpy(np.asarray([steps], dtype=np.int32))
@@ -73,6 +80,7 @@ class SDTritonServer:
             model_version=model_version,
             inputs=[
                 self.prompt_in,
+                self.init_image_in,
                 self.samples_in,
                 self.steps_in,
                 self.guidance_scale_in,
@@ -178,8 +186,8 @@ if __name__ == "__main__":
             "Upload an Image (Optional)", type=["jpg", "jpeg", "png"]
         )
         if uploaded_image is not None:
-            image = Image.open(uploaded_image)
-            st.image(image, caption="Uploaded Image.", use_column_width=True)
+            init_image = Image.open(uploaded_image)
+            st.image(init_image, caption="Uploaded Image.", use_column_width=True)
         else:
             image_placeholder = st.image(f"{path}/assets/placeholder.png")
             image_placeholder.empty()
@@ -204,8 +212,10 @@ if __name__ == "__main__":
             model_version=model_version,
             batch_size=batch_size,
         )
+        init_image = cv2.cvtColor(np.array(init_image), cv2.COLOR_RGB2BGR)
         pil_images = sd_triton_server.infer(
             prompt=prompt,
+            init_image=init_image,
             samples=samples,
             steps=steps,
             guidance_scale=guidance_scale,

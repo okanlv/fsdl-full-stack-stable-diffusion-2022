@@ -2,3 +2,4 @@ streamlit
 tritonclient[http]
 numpy
 pillow
+opencv-python

@@ -132,4 +132,7 @@ dmypy.json
 .vscode/
 
 # repo
-triton/sd-v1-4-onnx/models/*
+*.onnx
+*.pbtxt
+triton/sd-v1-4-onnx/models/stable_diffusion/1/*
+!triton/sd-v1-4-onnx/models/stable_diffusion/1/*.py
