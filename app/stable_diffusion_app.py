@@ -188,7 +188,7 @@ if __name__ == "__main__":
         )
         # TODO: Investigate tritonserver timeout error when using larger step size > 50
         steps = st.slider(
-            label="Number of Steps: ", min_value=1, max_value=500, value=1, key="steps"
+            label="Number of Steps: ", min_value=1, max_value=500, value=50, key="steps"
         )
         guidance_scale = st.slider(
             label="Guidance Scale: ",
