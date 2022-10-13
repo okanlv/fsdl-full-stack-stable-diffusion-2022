@@ -1,21 +1,30 @@
 # fsdl-full-stack-stable-diffusion-2022
 
-You need to run the following services.
+You need to clone this repo and run the following services.
+## Clone the repo and download models
+```bash
+# clone this repo
+git clone git@github.com:okanlv/fsdl-full-stack-stable-diffusion-2022.git
+# download models
+cd fsdl-full-stack-stable-diffusion-2022
+sh triton/download_models.sh
+```
+
 
 ## Localstack
 
 Run Localstack with Docker-compose using the following commands.
 ```bash
-docker-compose -f localstack/docker-compose.yml up 
+docker-compose -f localstack/docker-compose.yml up --detach
 ```
 
-In a separate terminal, create a bucket named `fssd-models`,and upload our model repository, that will be used in Triton Inference Server.
+Now, create a bucket named `fssd-models`,and upload our model repository, that will be used in Triton Inference Server.
 ```bash
 aws --endpoint-url=http://localhost:4566 s3api create-bucket --bucket fssd-models
 aws --endpoint-url=http://localhost:4566 s3 cp triton/sd-v1-4-onnx/models s3://fssd-models/model_repository --recursive
 ```
 
-## Triton Inference Server
+## Run Triton Inference Server and Streamlit app
 
 Build the custom Triton Inference Server docker image
 
@@ -23,11 +32,16 @@ Build the custom Triton Inference Server docker image
 docker build -t tritonserver triton/.
 ```
 
-Run the Triton Inference Server with the custom image.
+Build the custom Streamlit App docker image
 
 ```bash
-docker run -it --rm --gpus all --net=host --shm-size 16384m \
--v $PWD/triton/sd-v1-4-onnx-test/models:/models tritonserver tritonserver --model-repository /models/
+docker build -t streamlit app/.
+```
+
+Run the Triton Inference Server and Streamlit app.
+
+```bash
+docker-compose -f app/docker-compose.yml up
 ```
 
 You could check the Triton Inference Server metric page at http://localhost:8002/metrics.
@@ -82,21 +96,39 @@ You could check the Grafana page at http://localhost:3000. Enter `admin` for the
 go to http://localhost:3000/d/S-BvSNn4k/triton-inference-server-dashboard page to see the Triton Inference Server Dashboard.
 Take a look at this dashboard after you have send a few request in the following section.
 
-## Streamlit
 
-Create a python environment to run Streamlit
+## Share local Streamlit app with ngrok
 
+1. Create a ngrok acount [here](https://dashboard.ngrok.com/signup) and log in.
+2. Install ngrok
 ```bash
-conda create --name webserver python=3.10
-conda activate webserver
-pip install -r app/requirements.txt
+curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null && \
+echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list && \
+sudo apt update && sudo apt install ngrok
 ```
 
-Run the web server.
+3. Authenticate your ngrok agent.
+  ```bash
+  ngrok authtoken <relace-with-your-Authtoken>
+  ```
+  you can get your token by visiting [here](https://dashboard.ngrok.com/get-started/your-authtoken).
+
+4. Forward your local Streamlit app to ngrok
 
 ```bash
-cd app 
-streamlit run stable_diffusion_app.py
+ngrok http 8501
+```
+Now you will see a link to your streamlit app via ngrok similar to the following which forward localhost:8501 to an ngrok url.
+
+```bash
+ngrok by @inconshreveable                                                                                                    
+
+Session Status                online                                                                                                                                                                                                                                                         
+Account                       Omid (Plan: Free)                                                                                                                                                                                                                                              
+Version                       2.3.40                                                                                                                                                                                                                                                         
+Region                        United States (us)                                                                                                                                                                                                                                             
+Web Interface                 http://127.0.0.1:4040 
+Forwarding                    http://aeda-188-119-39-165.ngrok.io -> http://localhost:8501                                                                                                                                                                                                   
 ```
 
-You can now view your Streamlit app in http://localhost:8501.
+You can now view your Streamlit app in the link provided by ngrok.
