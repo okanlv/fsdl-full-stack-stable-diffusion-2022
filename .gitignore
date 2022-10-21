@@ -129,3 +129,11 @@ dmypy.json
 .pyre/
 
 .idea/
+.vscode/
+
+# repo
+*.onnx
+*.pbtxt
+*tar.gz
+triton/sd-v1-4-onnx/models/*
+
